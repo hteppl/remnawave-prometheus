@@ -1,0 +1,12 @@
+services:
+  remnawave-prometheus:
+    image: hteppl/remnawave-prometheus:latest
+    container_name: remnawave-prometheus
+    restart: unless-stopped
+    env_file:
+      - .env
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
