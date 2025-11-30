@@ -1,313 +1,197 @@
-# Prometheus Dynamic Targets Generator
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hteppl/remnawave-prometheus/master/.github/images/logo.png" alt="remnawave-prometheus" width="600">
+</p>
 
-A Python project that dynamically generates Prometheus targets from the Remna API for service discovery.
+## remnawave-prometheus
 
-## Overview
+<p align="left">
+  <a href="https://github.com/hteppl/remnawave-prometheus/releases/"><img src="https://img.shields.io/github/v/release/hteppl/remnawave-prometheus.svg" alt="Release"></a>
+  <a href="https://hub.docker.com/r/hteppl/remnawave-prometheus/"><img src="https://img.shields.io/badge/DockerHub-remnawave--prometheus-blue" alt="DockerHub"></a>
+  <a href="https://github.com/hteppl/remnawave-prometheus/actions"><img src="https://img.shields.io/github/actions/workflow/status/hteppl/remnawave-prometheus/dockerhub-publish.yaml" alt="Build"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.12-blue.svg" alt="Python 3.12"></a>
+  <a href="https://opensource.org/licenses/GPL-3.0"><img src="https://img.shields.io/badge/license-GPLv3-green.svg" alt="License: GPL v3"></a>
+</p>
 
-This project provides a Python script that continuously fetches targets from the Remna API and generates a Prometheus-compatible targets file. The script runs as a daemon, automatically updating targets at a configurable interval.
+Just a simple way to autogenerate prometheus targets, based on Remnawave panel (https://docs.rw).
 
-## Project Structure
+## Features
 
+- **Auto-discovery** - Automatically fetches nodes from Remnawave API and generates Prometheus targets
+- **Multiple Exporters** - Supports both Node Exporter and Blackbox Exporter targets
+- **Configurable Ports** - Define custom ports for Node Exporter targets
+- **Periodic Updates** - Continuously updates targets at configurable intervals
+- **Lightweight** - Minimal dependencies and simple configuration
+- **Docker Ready** - Easy deployment with Docker and Docker Compose
+
+## Prerequisites
+
+Before you begin, ensure you have the following:
+
+- **Remnawave Panel** with nodes configured
+- **Remnawave API Token** - Generate from your Remnawave panel settings
+- **Prometheus** - Running instance to consume the generated targets
+
+## Configuration
+
+Copy [`.env.example`](.env.example) to `.env` and fill in your values:
+
+```env
+# Remna API Configuration
+REMNA_API_URL=https://api.example.com/targets
+REMNA_API_TOKEN=your_api_token_here
+
+# Update interval in seconds (how often to regenerate targets)
+UPDATE_INTERVAL=600
+
+# Enable/disable generators
+ENABLE_NODE_EXPORTER=true
+ENABLE_BLACKBOX_EXPORTER=true
+
+# Node exporter ports (comma-separated)
+NODE_EXPORTER_PORTS=9100
 ```
-.
-├── src/                      # Main package
-│   ├── __init__.py          # Package initialization
-│   ├── __main__.py          # Entry point (with logging setup)
-│   ├── config.py            # Configuration management
-│   ├── api.py               # API client
-│   ├── runner.py            # Main runner loop
-│   └── generators/          # Target generators package
-│       ├── __init__.py      # Generators package init
-│       ├── base.py          # Abstract base class
-│       └── prometheus_generator.py  # Prometheus generator implementation
-├── prometheus.yml            # Example Prometheus config with file import
-├── .env                      # Environment configuration (create from .env.example)
-├── .env.example              # Example environment variables
-├── requirements.txt          # Python dependencies
-└── generated/               # Output directory (created automatically)
-    └── targets.yml          # Generated targets file
-```
+
+### Configuration Reference
+
+| Variable                   | Description                                        | Default | Required |
+|----------------------------|----------------------------------------------------|---------|----------|
+| `REMNA_API_URL`            | Remnawave API endpoint to fetch targets from       | -       | Yes      |
+| `REMNA_API_TOKEN`          | API authentication token                           | -       | Yes      |
+| `UPDATE_INTERVAL`          | Interval in seconds between target updates         | 600     | No       |
+| `ENABLE_NODE_EXPORTER`     | Enable/disable Node Exporter target generation     | true    | No       |
+| `ENABLE_BLACKBOX_EXPORTER` | Enable/disable Blackbox Exporter target generation | true    | No       |
+| `NODE_EXPORTER_PORTS`      | Comma-separated list of ports for Node Exporter    | 9100    | No       |
 
 ## Installation
 
-1. Install dependencies:
+### Docker (recommended)
+
+1. Create the docker-compose.yml:
+
+```yaml
+services:
+  remnawave-prometheus:
+    image: hteppl/remnawave-prometheus:latest
+    container_name: remnawave-prometheus
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./generated:/app/generated
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+```
+
+2. Create and configure your environment file:
+
+```bash
+cp .env.example .env
+nano .env  # or use your preferred editor
+```
+
+3. Start the container:
+
+```bash
+docker compose up -d && docker compose logs -f
+```
+
+### Manual Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/hteppl/remnawave-prometheus.git
+cd remnawave-prometheus
+```
+
+2. Create a virtual environment (recommended):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# or
+.venv\Scripts\activate     # Windows
+```
+
+3. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-Or using the virtual environment:
-```bash
-.venv/bin/pip install -r requirements.txt
-```
+4. Create and configure your environment file:
 
-2. Configure environment variables:
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your configuration:
-```env
-REMNA_API_URL=https://api.example.com/targets
-REMNA_API_TOKEN=your_api_token_here
-UPDATE_INTERVAL=30
-```
+5. Run the application:
 
-### Environment Variables
-
-- `REMNA_API_URL` - The Remna API endpoint to fetch targets from (required)
-- `REMNA_API_TOKEN` - API authentication token (required)
-- `UPDATE_INTERVAL` - Interval in seconds between target updates (default: 30)
-
-## Usage
-
-### Basic Usage
-
-Run continuously and update targets every `UPDATE_INTERVAL` seconds:
 ```bash
 python -m src
 ```
 
-The script will:
-- Load configuration from `.env`
-- Fetch targets from the API every `UPDATE_INTERVAL` seconds
-- Automatically regenerate `generated/targets.yml`
-- Run until stopped with Ctrl+C
+## How It Works
 
-**Output:**
-```
-[2025-11-29 16:30:00] INFO - Configuration loaded:
-[2025-11-29 16:30:00] INFO -   API URL: https://api.example.com/targets
-[2025-11-29 16:30:00] INFO -   Update Interval: 30s
-[2025-11-29 16:30:00] INFO - Starting continuous update mode
-[2025-11-29 16:30:00] INFO - Press Ctrl+C to stop
-[2025-11-29 16:30:00] INFO - Successfully fetched 3 targets from API
-[2025-11-29 16:30:00] INFO - Generated targets file: generated/targets.yml
-[2025-11-29 16:30:00] INFO - Successfully generated 3 target(s)
-[2025-11-29 16:30:00] INFO - Next update in 30s...
-```
+1. **Initial Fetch** - On startup, the service fetches all nodes from the Remnawave API
 
-### Custom Output Path
+2. **Target Generation** - Based on configuration, it generates target files for Node Exporter and/or Blackbox Exporter
 
-Specify a custom output path:
-```bash
-python -m src --output custom/path/targets.yml
-```
+3. **Continuous Updates** - The service polls the Remnawave API at the configured interval (`UPDATE_INTERVAL`) and
+   regenerates targets
 
-### Multiple Output Files
+4. **Prometheus Integration** - Prometheus reads the generated target files and automatically discovers new nodes
 
-Generate multiple target files simultaneously (useful for different Prometheus instances or configurations):
-```bash
-python -m src --output "generated/prod-targets.yml,generated/dev-targets.yml"
-```
+The service generates two target files:
 
-This will:
-- Fetch targets from API once
-- Generate both files with the same data
-- Show progress for all files
+- `generated/blackbox.yml` - Targets for Blackbox Exporter
+- `generated/node.yml` - Targets for Node Exporter
 
-## API Response Format
-
-The Remna API should return JSON in this format:
-
-```json
-{
-  "targets": [
-    {
-      "host": "localhost:9090",
-      "labels": {
-        "env": "production",
-        "service": "prometheus"
-      }
-    },
-    {
-      "host": "localhost:9100",
-      "labels": {
-        "env": "production",
-        "service": "node_exporter"
-      }
-    }
-  ]
-}
-```
-
-Alternatively, you can use `"target"` instead of `"host"`:
-```json
-{
-  "targets": [
-    {
-      "target": "localhost:9090",
-      "labels": {
-        "env": "production"
-      }
-    }
-  ]
-}
-```
-
-## Generated Output
-
-The script generates a file in Prometheus `file_sd_configs` format:
-
-```yaml
-- targets:
-  - localhost:9090
-  labels:
-    env: production
-    service: prometheus
-- targets:
-  - localhost:9100
-  labels:
-    env: production
-    service: node_exporter
-```
-
-## Integration with Prometheus
-
-The `prometheus.yml` file shows how to import the generated targets:
+Example `prometheus.yml` configuration:
 
 ```yaml
 scrape_configs:
-  # Dynamic targets fetched from Remna API
-  # Update refresh_interval to match UPDATE_INTERVAL from .env
-  - job_name: 'dynamic_targets'
+  - job_name: "node_servers"
     file_sd_configs:
       - files:
-          - 'generated/targets.yml'
-        refresh_interval: 30s
+          - /etc/generated/node.yml
+        refresh_interval: 10m
+
+  - job_name: "blackbox_https_probes"
+    metrics_path: /probe
+    params:
+      module: [ http_2xx ]
+    file_sd_configs:
+      - files:
+          - /etc/generated/blackbox.yml
+        refresh_interval: 10m
+    relabel_configs:
+      - source_labels: [ __address__ ]
+        target_label: __param_target
+      - source_labels: [ __param_target ]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
 ```
 
-Prometheus will automatically reload the targets file at the specified interval. Make sure `refresh_interval` matches or is less than your `UPDATE_INTERVAL`.
+Prometheus will automatically reload the targets files at the specified interval. Make sure `refresh_interval` matches
+or is less than or equal to your `UPDATE_INTERVAL`.
 
-## Running as a Service
+### Logs
 
-### Systemd Service (Recommended)
+Monitor logs to diagnose issues:
 
-Create a systemd service for continuous updates:
-
-**`/etc/systemd/system/prometheus-targets.service`**
-```ini
-[Unit]
-Description=Prometheus Targets Generator
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/path/to/project
-ExecStart=/path/to/python -m src
-User=prometheus
-Group=prometheus
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start:
 ```bash
-sudo systemctl enable prometheus-targets.service
-sudo systemctl start prometheus-targets.service
-
-# Check status
-sudo systemctl status prometheus-targets.service
-
-# View logs
-sudo journalctl -u prometheus-targets.service -f
-```
-
-### Docker Container
-
-Create a `Dockerfile`:
-```dockerfile
-FROM python:3.12-slim
-
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY src ./src
-COPY .env .
-
-CMD ["python", "-m", "src"]
-```
-
-Build and run:
-```bash
-docker build -t prometheus-targets .
-
-docker run -d \
-  --name prometheus-targets \
-  --restart unless-stopped \
-  -v $(pwd)/.env:/app/.env:ro \
-  -v $(pwd)/generated:/app/generated \
-  prometheus-targets
-```
-
-## Error Handling
-
-The script handles errors gracefully:
-- **API failures**: Logged with timestamp, script continues and retries at next interval
-- **Invalid JSON**: Error logged, update skipped, retries at next interval
-- **Network timeouts**: 30-second timeout with error logging
-- **Graceful shutdown**: Handles SIGINT (Ctrl+C) and SIGTERM cleanly
-
-If an update fails, the script will retry at the next interval without crashing.
-
-## Command-Line Arguments
-
-```
---output PATH    Output file path (default: generated/targets.yml)
-```
-
-## Security
-
-- Never commit your `.env` file to version control
-- Store `REMNA_API_TOKEN` securely (use secrets manager in production)
-- Use HTTPS for `REMNA_API_URL`
-- Limit API token permissions to read-only
-- Run as non-privileged user (not root)
-
-## Monitoring
-
-Watch the logs to ensure targets are updating:
-```bash
-# Systemd
-sudo journalctl -u prometheus-targets.service -f
-
 # Docker
-docker logs -f prometheus-targets
+docker compose logs -f
 
-# Direct execution
-python -m src
+# Manual
+# Logs are output to stdout with timestamps
 ```
-
-Look for:
-- Successful API fetches
-- Target count
-- Update timestamps
-- Any error messages
-
-## Troubleshooting
-
-**Script exits immediately:**
-- Check `.env` file exists and has required variables
-- Verify `REMNA_API_URL` and `REMNA_API_TOKEN` are set
-
-**API connection failures:**
-- Verify network connectivity
-- Check API URL is correct and accessible
-- Ensure API token is valid
-- Check firewall rules
-
-**Prometheus not picking up targets:**
-- Verify `generated/targets.yml` exists and has content
-- Check Prometheus `file_sd_configs` path matches output path
-- Ensure Prometheus has read permissions on the file
-- Check Prometheus logs for file_sd errors
 
 ## License
 
-MIT
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
