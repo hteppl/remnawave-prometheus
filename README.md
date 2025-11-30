@@ -37,7 +37,7 @@ Copy [`.env.example`](.env.example) to `.env` and fill in your values:
 
 ```env
 # Remna API Configuration
-REMNA_API_URL=https://api.example.com/targets
+REMNA_API_URL=https://remna.docs.rw/api
 REMNA_API_TOKEN=your_api_token_here
 
 # Update interval in seconds (how often to regenerate targets)
