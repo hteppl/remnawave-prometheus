@@ -36,7 +36,7 @@ Before you begin, ensure you have the following:
 Copy [`.env.example`](.env.example) to `.env` and fill in your values:
 
 ```env
-# Remna API Configuration
+# Remnawave API Configuration
 REMNA_API_URL=https://remna.docs.rw/api
 REMNA_API_TOKEN=your_api_token_here
 
