@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/hteppl/remnawave-prometheus/master/.github/images/logo.png" alt="remnawave-prometheus">
+  <img src="https://raw.githubusercontent.com/hteppl/remnawave-prometheus/master/.github/images/logo.png" alt="remnawave-prometheus" width="800px">
 </p>
 
 ## remnawave-prometheus
