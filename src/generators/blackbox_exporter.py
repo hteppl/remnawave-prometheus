@@ -26,9 +26,9 @@ class BlackboxTargetGenerator(TargetGenerator):
             address = target.get("address")
 
             if _is_ipv4(address):
-                ipv4_addresses.append(address)
+                ipv4_addresses.append(f"http://{address}")
             else:
-                domains.append(address)
+                domains.append(f"https://{address}")
 
         all_targets = domains + ipv4_addresses
         return [{"targets": all_targets}] if all_targets else []
