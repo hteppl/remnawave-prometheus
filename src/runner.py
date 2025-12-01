@@ -19,6 +19,9 @@ async def update_targets(
         if not nodes:
             logger.warning("No nodes fetched from API")
 
+        if not env_config["scrape_disabled_nodes"]:
+            nodes = [node for node in nodes if not node.get("isDisabled", False)]
+
         for generator in generators:
             count = generator.process(nodes)
             logger.info(f"Successfully generated {count} targets")
@@ -34,6 +37,7 @@ async def run_continuous_updates(generators: List[TargetGenerator], env_config: 
     logger.info("Configuration loaded:")
     logger.info(f"  API URL: {env_config['api_url']}")
     logger.info(f"  Update Interval: {env_config['update_interval']}s")
+    logger.info(f"  Scrape Disabled Nodes: {env_config['scrape_disabled_nodes']}")
     logger.info(f"  Output Files: {len(generators)}")
     for i, gen in enumerate(generators, 1):
         logger.info(f"    {i}. {gen.output_path}")

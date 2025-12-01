@@ -31,6 +31,7 @@ def load_env_config() -> Dict[str, Any]:
         "enable_blackbox": os.getenv("ENABLE_BLACKBOX_EXPORTER", "true").lower() == "true",
         "enable_node_exporter": os.getenv("ENABLE_NODE_EXPORTER", "true").lower() == "true",
         "node_exporter_ports": node_exporter_ports,
+        "scrape_disabled_nodes": os.getenv("SCRAPE_DISABLED_NODES", "true").lower() == "true",
     }
 
     return config
